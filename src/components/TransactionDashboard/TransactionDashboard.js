@@ -8,8 +8,23 @@ import { useTransactionStatus } from '../../hooks/useTransactionStatus';
 import { getCurrentStage } from '../../utils/helpers';
 
 const TransactionDashboard = () => {
-  const { data, transition } = useTransactionStatus();
-  const currentStage = getCurrentStage(data);
+  const { data, transition, error } = useTransactionStatus();
+  const currentStage = data ? getCurrentStage(data) : 0;
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-red-500">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-4">
