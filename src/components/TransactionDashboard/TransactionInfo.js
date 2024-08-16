@@ -2,6 +2,11 @@ import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '../Card/Card';
 import { getEtherscanLink } from '../../utils/helpers';
 
+const truncateHash = (hash, startLength = 8, endLength = 8) => {
+  if (!hash) return 'N/A';
+  return `${hash.slice(0, startLength)}...${hash.slice(-endLength)}`;
+};
+
 const TransactionInfo = ({ data }) => {
   if (!data || !data.txInfo) {
     return (
@@ -25,7 +30,7 @@ const TransactionInfo = ({ data }) => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="font-semibold">Tx Hash:</p>
-            <p className="text-sm">{data.txInfo.hash || 'N/A'}</p>
+            <p className="text-sm">{truncateHash(data.txInfo.hash)}</p>
           </div>
           <div>
             <p className="font-semibold">Committee Size:</p>

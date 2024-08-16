@@ -12,7 +12,7 @@ export const getPartialDecryptionProgress = (data) => {
 };
 
 export const getEtherscanLink = (data) => {
-  const baseUrl = "https://etherscan.io/tx/";
+  const baseUrl = "https://holesky.etherscan.io/tx/";
   if (!data || !data.txInfo || !data.txInfo.hash) {
     return baseUrl; // Return base URL if data is not available
   }

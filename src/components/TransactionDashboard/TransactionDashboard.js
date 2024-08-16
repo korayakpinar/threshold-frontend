@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../Ca
 import { useTransactionStatus } from '../../hooks/useTransactionStatus';
 import { getCurrentStage } from '../../utils/helpers';
 
-const TransactionDashboard = () => {
-  const { data, transition, error } = useTransactionStatus();
+const TransactionDashboard = ({ txHash }) => {
+  const { data, transition, error } = useTransactionStatus(txHash);
   const currentStage = data ? getCurrentStage(data) : 0;
 
   if (error) {
@@ -20,6 +20,21 @@ const TransactionDashboard = () => {
           </CardHeader>
           <CardContent>
             <p className="text-center text-red-500">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="max-w-4xl mx-auto p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center">Loading</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center">Fetching transaction data...</p>
           </CardContent>
         </Card>
       </div>
