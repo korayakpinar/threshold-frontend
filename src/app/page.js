@@ -13,7 +13,7 @@ const truncateHash = (hash, startLength = 6, endLength = 4) => {
 // Function to fetch recent transactions
 const getRecentTransactions = async () => {
   try {
-    const response = await axios.get('http://threshold-client:8082/recent-transactions');
+    const response = await axios.get('http://0.0.0.0:8082/recent-transactions');
     console.log('Recent transactions:', response);
     return response.data;
   } catch (error) {
@@ -62,14 +62,22 @@ export default function Home() {
   if (loading) return <div className="text-center mt-8">Loading...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">{error}</div>;
 
-  return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Recent Transactions</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {transactions.map((transaction, index) => (
-          <TransactionBox key={index} transaction={transaction} />
-        ))}
-      </div>
-    </main>
-  );
+  if (transactions !== null) {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-center mb-8">Recent Transactions</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          { transactions.map((transaction, index) => (
+            <TransactionBox key={index} transaction={transaction} />
+          ))}
+        </div>
+      </main>
+    )
+  } else {
+    return (
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-center mb-8">No recent transactions</h1>
+      </main>
+    );
+  }
 }
