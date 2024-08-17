@@ -13,7 +13,7 @@ const truncateHash = (hash, startLength = 6, endLength = 4) => {
 // Function to fetch recent transactions
 const getRecentTransactions = async () => {
   try {
-    const response = await axios.get('http://0.0.0.0:8082/recent-transactions');
+    const response = await axios.get(`${document.location.origin}:8082/recent-transactions`);
     console.log('Recent transactions:', response);
     return response.data;
   } catch (error) {
