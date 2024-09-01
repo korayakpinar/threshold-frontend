@@ -1,6 +1,7 @@
+// src/components/TransactionDashboard/TransactionInfo.js
 import React from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from '../Card/Card';
-import { getEtherscanLink } from '../../utils/helpers';
+import { getEtherscanLink, weiToEther } from '../../utils/helpers';
 
 const truncateHash = (hash, startLength = 8, endLength = 8) => {
   if (!hash) return 'N/A';
@@ -8,7 +9,7 @@ const truncateHash = (hash, startLength = 8, endLength = 8) => {
 };
 
 const TransactionInfo = ({ data }) => {
-  if (!data || !data.txInfo) {
+  if (!data) {
     return (
       <Card>
         <CardHeader>
@@ -30,21 +31,45 @@ const TransactionInfo = ({ data }) => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="font-semibold">Tx Hash:</p>
-            <p className="text-sm">{truncateHash(data.txInfo.hash)}</p>
+            <p className="text-sm">{truncateHash(data.hash)}</p>
+          </div>
+          <div>
+            <p className="font-semibold">Status:</p>
+            <p className="text-sm">{data.status}</p>
           </div>
           <div>
             <p className="font-semibold">Committee Size:</p>
-            <p className="text-sm">{data.txInfo.committeeSize || 'N/A'}</p>
+            <p className="text-sm">{data.committeeSize}</p>
           </div>
           <div>
             <p className="font-semibold">Threshold:</p>
-            <p className="text-sm">{data.txInfo.threshold || 'N/A'}</p>
+            <p className="text-sm">{data.threshold}</p>
           </div>
-          {data.included && data.txInfo.hash && (
+          {data.rawTx && (
+            <>
+              <div>
+                <p className="font-semibold">From:</p>
+                <p className="text-sm">{truncateHash(data.rawTx.From)}</p>
+              </div>
+              <div>
+                <p className="font-semibold">To:</p>
+                <p className="text-sm">{truncateHash(data.rawTx.To)}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Value:</p>
+                <p className="text-sm">{weiToEther(data.rawTx.Value)}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Nonce:</p>
+                <p className="text-sm">{data.rawTx.Nonce}</p>
+              </div>
+            </>
+          )}
+          {data.status === 'included' && data.hash && (
             <div className="col-span-2">
               <p className="font-semibold">Etherscan Link:</p>
               <a 
-                href={getEtherscanLink(data)} 
+                href={getEtherscanLink(data.hash)} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-blue-500 hover:text-blue-700 underline"

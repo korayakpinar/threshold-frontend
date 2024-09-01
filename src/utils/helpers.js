@@ -1,20 +1,30 @@
+// src/utils/helpers.js
+
 export const getCurrentStage = (data) => {
-  if (!data || !data.proposed) return 0;
-  if (data.partialDecryptionCount < data.txInfo.threshold) return 1;
-  if (!data.decrypted) return 2;
-  if (!data.included) return 3;
-  return 4; // All stages completed
+  if (data.status === 'pending') return 0;
+  if (data.status === 'proposed') return 1;
+  if (data.status === 'decrypted') return 2;
+  if (data.status === 'included') return 3;
+  return 0;
 };
 
-export const getPartialDecryptionProgress = (data) => {
-  if (!data || !data.txInfo) return 0;
-  return (data.partialDecryptionCount / data.txInfo.threshold) * 100;
+export const getEtherscanLink = (hash) => {
+  return `https://holesky.etherscan.io/tx/${hash}`;
 };
 
-export const getEtherscanLink = (data) => {
-  const baseUrl = "https://holesky.etherscan.io/tx/";
-  if (!data || !data.txInfo || !data.txInfo.hash) {
-    return baseUrl; // Return base URL if data is not available
+export const weiToEther = (wei) => {
+  if (!wei) return 'N/A';
+  const ether = parseFloat(wei) / 1e18;
+  
+  if (ether < 1e-6) {
+    
+    const gwei = ether * 1e9;
+    return `${gwei.toFixed(2)} Gwei`;
+  } else if (ether < 0.01) {
+    
+    return `${ether.toFixed(6)} ETH`;
+  } else {
+    
+    return `${ether.toFixed(4)} ETH`;
   }
-  return `${baseUrl}${data.txInfo.hash}`;
 };
