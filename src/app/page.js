@@ -1,9 +1,10 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-
-const WS_URL = `ws://${window.location.hostname}:8082/ws`;
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+import { useRecentTransactions } from '../hooks/useRecentTransactions';
 
 const truncateHash = (hash, startLength = 6, endLength = 4) => {
   if (!hash) return 'N/A';
@@ -24,114 +25,94 @@ const weiToEther = (wei) => {
   }
 };
 
-const TransactionBox = ({ transaction }) => {
+const TransactionBox = ({ transaction, isLoading }) => {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/tx/${transaction.hash}`);
+    if (!isLoading && transaction) {
+      router.push(`/tx/${transaction.hash}`);
+    }
   };
 
-  const isDecrypted = transaction.status === 'decrypted' || transaction.status === 'included';
+  const isDecrypted = transaction?.status === 'decrypted' || transaction?.status === 'included';
 
   return (
     <div 
       onClick={handleClick}
-      className="bg-white p-4 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-t-2 border-blue-500"
+      className={`bg-white p-4 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105 border-t-2 border-blue-500 ${!isLoading && 'cursor-pointer'} h-[200px] flex flex-col justify-between`}
     >
-      <div className="text-lg font-bold mb-2 text-blue-600">
-        {truncateHash(transaction.hash)}
-      </div>
-      <div className="text-sm space-y-2">
-        <div>
-          <span className="font-semibold">Status: </span>
-          <span className={transaction.status === 'included' ? 'text-green-600' : 'text-blue-600'}>
-            {transaction.status}
-          </span>
+      <div>
+        <div className="text-lg font-bold mb-2 text-blue-600">
+          {isLoading ? <Skeleton width="80%" height={24} /> : truncateHash(transaction.hash)}
         </div>
-        {isDecrypted && transaction.rawTx && (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col items-center">
-                <span className="font-semibold">From</span>
-                <span>{truncateHash(transaction.rawTx.From)}</span>
+        <div className="text-sm space-y-2">
+          {isLoading ? (
+            <>
+              <Skeleton width="60%" height={18} />
+              <Skeleton width="70%" height={18} />
+              <Skeleton width="65%" height={18} />
+            </>
+          ) : (
+            <>
+              <div>
+                <span className="font-semibold">Status: </span>
+                <span className={transaction.status === 'included' ? 'text-green-600' : 'text-blue-600'}>
+                  {transaction.status}
+                </span>
               </div>
-              <ArrowRight className="text-gray-400" />
-              <div className="flex flex-col items-center">
-                <span className="font-semibold">To</span>
-                <span>{truncateHash(transaction.rawTx.To)}</span>
-              </div>
-            </div>
-            <div>
-              <span className="font-semibold">Value: </span>
-              <span>{weiToEther(transaction.rawTx.Value)}</span>
-            </div>
-            <div>
-              <span className="font-semibold">Nonce: </span>
-              <span>{transaction.rawTx.Nonce}</span>
-            </div>
-          </>
-        )}
+              {isDecrypted && transaction.rawTx && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-center">
+                      <span className="font-semibold">From</span>
+                      <span>{truncateHash(transaction.rawTx.From)}</span>
+                    </div>
+                    <ArrowRight className="text-gray-400" />
+                    <div className="flex flex-col items-center">
+                      <span className="font-semibold">To</span>
+                      <span>{truncateHash(transaction.rawTx.To)}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Value: </span>
+                    <span>{weiToEther(transaction.rawTx.Value)}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Nonce: </span>
+                    <span>{transaction.rawTx.Nonce}</span>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 export default function Home() {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const ws = useRef(null);
-
-  useEffect(() => {
-    ws.current = new WebSocket(WS_URL);
-
-    ws.current.onopen = () => {
-      console.log('WebSocket connection established');
-      ws.current.send(JSON.stringify({ type: 'getRecentTransactions' }));
-    };
-
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'recentTransactions') {
-        setTransactions(data.transactions);
-        setLoading(false);
-      }
-    };
-
-    ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setError('Failed to connect to WebSocket');
-      setLoading(false);
-    };
-
-    ws.current.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
-
-    return () => {
-      if (ws.current) {
-       
-      }
-    };
-  }, []);
-
-  if (loading) return <div className="text-center mt-8">Loading...</div>;
-  if (error) return <div className="text-center mt-8 text-red-500">{error}</div>;
+  const { transactions, connectionStatus } = useRecentTransactions();
+  const isLoading = connectionStatus !== 'connected';
 
   return (
     <main className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Recent Transactions</h1>
-      {transactions.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {transactions.map((transaction, index) => (
-            <TransactionBox key={index} transaction={transaction} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center text-gray-500 text-lg">
-          No transactions found.
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {isLoading ? (
+          [...Array(4)].map((_, index) => (
+            <TransactionBox key={index} isLoading={true} />
+          ))
+        ) : transactions.length > 0 ? (
+          transactions.slice(0, 8).map((transaction, index) => (
+            <TransactionBox key={index} transaction={transaction} isLoading={false} />
+          ))
+        ) : (
+          <div className="col-span-full text-center text-gray-500 text-lg">
+            No transactions found.
+          </div>
+        )}
+      </div>
     </main>
   );
 }

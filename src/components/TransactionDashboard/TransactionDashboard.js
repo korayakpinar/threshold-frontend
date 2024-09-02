@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 import StageProgress from './StageProgress';
 import TransactionInfo from './TransactionInfo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../Card/Card';
@@ -8,74 +10,32 @@ import { useTransactionStatus } from '../../hooks/useTransactionStatus';
 import { getCurrentStage } from '../../utils/helpers';
 
 const TransactionDashboard = ({ txHash }) => {
-  const { data, transition, error, connectionStatus } = useTransactionStatus(txHash);
+  const { data, transition, connectionStatus } = useTransactionStatus(txHash);
   const currentStage = useMemo(() => data ? getCurrentStage(data) : 0, [data]);
 
-  if (connectionStatus === 'connecting' || connectionStatus === 'reconnecting') {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Connecting...</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center">Establishing connection to the server... Status: {connectionStatus}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (connectionStatus === 'failed') {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Connection Failed</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center text-red-500">Failed to connect to the server. Please refresh the page or try again later.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Error</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center text-red-500">{error}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!data) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Loading</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-center">Fetching transaction data... Connection status: {connectionStatus}</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const isLoading = connectionStatus !== 'connected';
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Transaction Status Dashboard</CardTitle>
-          <CardDescription className="text-center">Current Stage: {['Proposed', 'Partial Decryption', 'Decrypted', 'Included'][currentStage]}</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">
+            {isLoading ? <Skeleton width={200} /> : "Transaction Status Dashboard"}
+          </CardTitle>
+          <CardDescription className="text-center">
+            {isLoading ? (
+              <Skeleton width={150} />
+            ) : (
+              `Current Stage: ${['Proposed', 'Partial Decryption', 'Decrypted', 'Included'][currentStage]}`
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <StageProgress data={data} currentStage={currentStage} transition={transition} />
+          <StageProgress data={data} currentStage={currentStage} transition={transition} isLoading={isLoading} />
         </CardContent>
       </Card>
 
-      <TransactionInfo data={data} />
+      <TransactionInfo data={data} isLoading={isLoading} />
     </div>
   );
 };

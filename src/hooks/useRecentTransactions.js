@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 const WS_URL = `ws://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8082/ws`;
 const RECONNECT_INTERVAL = 5000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
-export function useTransactionStatus(txHash) {
-    const [data, setData] = useState(null);
-    const [transition, setTransition] = useState(false);
+export function useRecentTransactions() {
+    const [transactions, setTransactions] = useState([]);
     const [connectionStatus, setConnectionStatus] = useState('connecting');
     
     const ws = useRef(null);
@@ -28,23 +27,17 @@ export function useTransactionStatus(txHash) {
             setConnectionStatus('connected');
             reconnectAttempts.current = 0;
             isConnected.current = true;
-            if (txHash) {
-                ws.current.send(JSON.stringify({ type: 'subscribe', txHash }));
-            }
+            ws.current.send(JSON.stringify({ type: 'getRecentTransactions' }));
+            ws.current.send(JSON.stringify({ type: 'subscribeToNewTransactions' }));
         };
 
         ws.current.onmessage = (event) => {
             try {
-                const message = JSON.parse(event.data);
-                if (message.type === 'txUpdate' && message.txHash === txHash) {
-                    setTransition(true);
-                    setData(prevData => {
-                        if (JSON.stringify(prevData) !== JSON.stringify(message.data)) {
-                            return message.data;
-                        }
-                        return prevData;
-                    });
-                    setTimeout(() => setTransition(false), 100);
+                const data = JSON.parse(event.data);
+                if (data.type === 'recentTransactions') {
+                    setTransactions(data.transactions);
+                } else if (data.type === 'newTransaction') {
+                    setTransactions(prevTransactions => [data.transaction, ...prevTransactions].slice(0, 8));
                 }
             } catch (e) {
                 console.error("Error parsing WebSocket message:", e);
@@ -65,7 +58,7 @@ export function useTransactionStatus(txHash) {
                 reconnectTimeout.current = setTimeout(connect, RECONNECT_INTERVAL);
             }
         };
-    }, [txHash]);
+    }, []);
 
     useEffect(() => {
         connect();
@@ -80,9 +73,7 @@ export function useTransactionStatus(txHash) {
         };
     }, [connect]);
 
-    const memoizedData = useMemo(() => data, [data]);
-
-    return { data: memoizedData, transition, connectionStatus };
+    return { transactions, connectionStatus };
 }
 
-export default useTransactionStatus;
+export default useRecentTransactions;
