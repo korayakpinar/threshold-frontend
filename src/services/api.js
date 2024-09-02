@@ -1,16 +1,43 @@
-import axios from 'axios';
+const WS_URL = 'ws://localhost:8082/ws';
 
-const getTxStatus = async (txHash) => {
-  
-  try {
-    const response = await axios.get(`http://127.0.0.1:8082/tx/${txHash}`);
+let socket = null;
 
-    console.log('Transaction status:', response);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching transaction status:', error);
-    throw error;
-  }
+const connectWebSocket = () => {
+    if (!socket) {
+        socket = new WebSocket(WS_URL);
+        socket.onopen = () => console.log('WebSocket connected');
+        socket.onclose = () => console.log('WebSocket disconnected');
+        socket.onerror = (error) => console.error('WebSocket error:', error);
+    }
+    return socket;
 };
 
-export { getTxStatus };
+export const getTxStatus = (txHash) => {
+    return new Promise((resolve, reject) => {
+        const socket = connectWebSocket();
+        const handler = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.hash === txHash) {
+                socket.removeEventListener('message', handler);
+                resolve(data);
+            }
+        };
+        socket.addEventListener('message', handler);
+        socket.send(JSON.stringify({ type: 'getTxStatus', txHash }));
+    });
+};
+
+export const getRecentTransactions = () => {
+    return new Promise((resolve, reject) => {
+        const socket = connectWebSocket();
+        const handler = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'recentTransactions') {
+                socket.removeEventListener('message', handler);
+                resolve(data.transactions);
+            }
+        };
+        socket.addEventListener('message', handler);
+        socket.send(JSON.stringify({ type: 'getRecentTransactions' }));
+    });
+};

@@ -1,11 +1,11 @@
-// src/app/page.js
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 import { ArrowRight } from 'lucide-react';
 
-const truncateHash = (hash, startLength =6, endLength = 4) => {
+const WS_URL = `ws://${window.location.hostname}:8082/ws`;
+
+const truncateHash = (hash, startLength = 6, endLength = 4) => {
   if (!hash) return 'N/A';
   return `${hash.slice(0, startLength)}...${hash.slice(-endLength)}`;
 };
@@ -15,25 +15,12 @@ const weiToEther = (wei) => {
   const ether = parseFloat(wei) / 1e18;
   
   if (ether < 1e-6) {
-    
     const gwei = ether * 1e9;
     return `${gwei.toFixed(2)} Gwei`;
   } else if (ether < 0.01) {
-    
     return `${ether.toFixed(6)} ETH`;
   } else {
-    
     return `${ether.toFixed(4)} ETH`;
-  }
-};
-
-const getRecentTransactions = async () => {
-  try {
-    const response = await axios.get(`${document.location.origin}:8082/recent-transactions`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching recent transactions:', error);
-    throw error;
   }
 };
 
@@ -93,20 +80,39 @@ export default function Home() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const ws = useRef(null);
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data = await getRecentTransactions();
-        setTransactions(data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch recent transactions');
+    ws.current = new WebSocket(WS_URL);
+
+    ws.current.onopen = () => {
+      console.log('WebSocket connection established');
+      ws.current.send(JSON.stringify({ type: 'getRecentTransactions' }));
+    };
+
+    ws.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'recentTransactions') {
+        setTransactions(data.transactions);
         setLoading(false);
       }
     };
 
-    fetchTransactions();
+    ws.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setError('Failed to connect to WebSocket');
+      setLoading(false);
+    };
+
+    ws.current.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    return () => {
+      if (ws.current) {
+       
+      }
+    };
   }, []);
 
   if (loading) return <div className="text-center mt-8">Loading...</div>;
