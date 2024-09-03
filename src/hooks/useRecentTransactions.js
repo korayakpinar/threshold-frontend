@@ -6,12 +6,8 @@ const RECONNECT_INTERVAL = 5000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
 export function useRecentTransactions(ws_url) {
-    if (typeof window === 'undefined') {
-        return { transactions: [], connectionStatus: 'disconnected' };
-    }
-
     const [transactions, setTransactions] = useState([]);
-    const [connectionStatus, setConnectionStatus] = useState('connecting');
+    const [connectionStatus, setConnectionStatus] = useState('disconnected');
     
     const ws = useRef(null);
     const reconnectAttempts = useRef(0);
@@ -19,7 +15,7 @@ export function useRecentTransactions(ws_url) {
     const isConnected = useRef(false);
 
     const connect = useCallback(() => {
-        if (isConnected.current || reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+        if (typeof window === 'undefined' || isConnected.current || reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
             return;
         }
 
@@ -38,11 +34,15 @@ export function useRecentTransactions(ws_url) {
             try {
                 const data = JSON.parse(event.data);
                 if (data.type === 'recentTransactions') {
-                    setTransactions(data.transactions);
+                    setTransactions(data.transactions || []);
                 } else if (data.type === 'newTransaction') {
-                    if (data.transaction) {
-                        setTransactions(prevTransactions => [data.transaction, ...prevTransactions]);
-                    }
+                    setTransactions(prevTransactions => {
+                        if (Array.isArray(prevTransactions)) {
+                            return [data.transaction, ...prevTransactions];
+                        } else {
+                            return [data.transaction];
+                        }
+                    });
                 }
             } catch (e) {
                 console.error("Error parsing WebSocket message:", e);
@@ -66,7 +66,7 @@ export function useRecentTransactions(ws_url) {
     }, [ws_url]);
 
     useEffect(() => {
-        if (ws_url) {
+        if (typeof window !== 'undefined' && ws_url) {
             connect();
         }
 
@@ -80,7 +80,7 @@ export function useRecentTransactions(ws_url) {
         };
     }, [connect, ws_url]);
 
-    return { transactions: transactions || [], connectionStatus };
+    return { transactions, connectionStatus };
 }
 
 export default useRecentTransactions;

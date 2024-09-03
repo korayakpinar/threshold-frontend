@@ -6,13 +6,9 @@ const RECONNECT_INTERVAL = 5000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
 export function useTransactionStatus(txHash, ws_url) {
-    if (typeof window === 'undefined') {
-        return { data: null, transition: false, connectionStatus: 'disconnected' };
-    }
-
     const [data, setData] = useState(null);
     const [transition, setTransition] = useState(false);
-    const [connectionStatus, setConnectionStatus] = useState('connecting');
+    const [connectionStatus, setConnectionStatus] = useState('disconnected');
     
     const ws = useRef(null);
     const reconnectAttempts = useRef(0);
@@ -20,7 +16,7 @@ export function useTransactionStatus(txHash, ws_url) {
     const isConnected = useRef(false);
 
     const connect = useCallback(() => {
-        if (isConnected.current || reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
+        if (typeof window === 'undefined' || isConnected.current || reconnectAttempts.current >= MAX_RECONNECT_ATTEMPTS) {
             return;
         }
 
@@ -71,7 +67,7 @@ export function useTransactionStatus(txHash, ws_url) {
     }, [txHash, ws_url]);
 
     useEffect(() => {
-        if (ws_url && txHash) {
+        if (typeof window !== 'undefined' && ws_url && txHash) {
             connect();
         }
 
