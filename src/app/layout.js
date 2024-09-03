@@ -4,7 +4,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Threshold TSS",
+  title: "Banger TSS",
   description: "You want to protect your transaction? Jump in!",
 };
 

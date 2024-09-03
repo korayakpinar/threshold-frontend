@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const WS_URL = `ws://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8082/ws`;
 const RECONNECT_INTERVAL = 5000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
-export function useRecentTransactions() {
+export function useRecentTransactions(ws_url) {
+    if (typeof window === 'undefined') {
+        return { transactions: [], connectionStatus: 'disconnected' };
+    }
+
     const [transactions, setTransactions] = useState([]);
     const [connectionStatus, setConnectionStatus] = useState('connecting');
     
@@ -20,7 +23,7 @@ export function useRecentTransactions() {
             return;
         }
 
-        ws.current = new WebSocket(WS_URL);
+        ws.current = new WebSocket(ws_url);
 
         ws.current.onopen = () => {
             console.log('WebSocket connection established');
@@ -37,7 +40,9 @@ export function useRecentTransactions() {
                 if (data.type === 'recentTransactions') {
                     setTransactions(data.transactions);
                 } else if (data.type === 'newTransaction') {
-                    setTransactions(prevTransactions => [data.transaction, ...prevTransactions].slice(0, 8));
+                    if (data.transaction) {
+                        setTransactions(prevTransactions => [data.transaction, ...prevTransactions]);
+                    }
                 }
             } catch (e) {
                 console.error("Error parsing WebSocket message:", e);
@@ -58,10 +63,12 @@ export function useRecentTransactions() {
                 reconnectTimeout.current = setTimeout(connect, RECONNECT_INTERVAL);
             }
         };
-    }, []);
+    }, [ws_url]);
 
     useEffect(() => {
-        connect();
+        if (ws_url) {
+            connect();
+        }
 
         return () => {
             if (ws.current) {
@@ -71,9 +78,9 @@ export function useRecentTransactions() {
                 clearTimeout(reconnectTimeout.current);
             }
         };
-    }, [connect]);
+    }, [connect, ws_url]);
 
-    return { transactions, connectionStatus };
+    return { transactions: transactions || [], connectionStatus };
 }
 
 export default useRecentTransactions;

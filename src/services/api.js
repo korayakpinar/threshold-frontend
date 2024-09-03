@@ -1,8 +1,9 @@
-const WS_URL = 'ws://localhost:8082/ws';
 
-let socket = null;
+
 
 const connectWebSocket = () => {
+    const WS_URL = `ws://${document.location.hostname}:8082/ws`;
+    let socket = null;
     if (!socket) {
         socket = new WebSocket(WS_URL);
         socket.onopen = () => console.log('WebSocket connected');

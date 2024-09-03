@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
-const WS_URL = `ws://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:8082/ws`;
 const RECONNECT_INTERVAL = 5000;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
-export function useTransactionStatus(txHash) {
+export function useTransactionStatus(txHash, ws_url) {
+    if (typeof window === 'undefined') {
+        return { data: null, transition: false, connectionStatus: 'disconnected' };
+    }
+
     const [data, setData] = useState(null);
     const [transition, setTransition] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState('connecting');
@@ -21,7 +24,7 @@ export function useTransactionStatus(txHash) {
             return;
         }
 
-        ws.current = new WebSocket(WS_URL);
+        ws.current = new WebSocket(ws_url);
 
         ws.current.onopen = () => {
             console.log('WebSocket connection established');
@@ -65,10 +68,12 @@ export function useTransactionStatus(txHash) {
                 reconnectTimeout.current = setTimeout(connect, RECONNECT_INTERVAL);
             }
         };
-    }, [txHash]);
+    }, [txHash, ws_url]);
 
     useEffect(() => {
-        connect();
+        if (ws_url && txHash) {
+            connect();
+        }
 
         return () => {
             if (ws.current) {
@@ -78,7 +83,7 @@ export function useTransactionStatus(txHash) {
                 clearTimeout(reconnectTimeout.current);
             }
         };
-    }, [connect]);
+    }, [connect, ws_url, txHash]);
 
     const memoizedData = useMemo(() => data, [data]);
 

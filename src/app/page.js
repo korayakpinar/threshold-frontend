@@ -92,7 +92,8 @@ const TransactionBox = ({ transaction, isLoading }) => {
 };
 
 export default function Home() {
-  const { transactions, connectionStatus } = useRecentTransactions();
+  const wsUrl = typeof window !== 'undefined' ? `ws://${window.location.hostname}:8082/ws` : '';
+  const { transactions, connectionStatus } = useRecentTransactions(wsUrl);
   const isLoading = connectionStatus !== 'connected';
 
   return (
