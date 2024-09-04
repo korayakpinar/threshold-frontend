@@ -10,7 +10,7 @@ import { useTransactionStatus } from '../../hooks/useTransactionStatus';
 import { getCurrentStage } from '../../utils/helpers';
 
 const TransactionDashboard = ({ txHash }) => {
-  const wsUrl = typeof window !== 'undefined' ? `ws://${window.location.hostname}:8082/ws` : '';
+  const wsUrl = "ws://banger.build:8082/ws";
   const { data, transition, connectionStatus } = useTransactionStatus(txHash, wsUrl);
   const currentStage = useMemo(() => data ? getCurrentStage(data) : 0, [data]);
 
