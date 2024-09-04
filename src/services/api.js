@@ -2,7 +2,7 @@
 
 
 const connectWebSocket = () => {
-    const WS_URL = `ws://banger.build:8082/ws`;
+    const WS_URL = `wss://banger.build:8082/ws`;
     let socket = null;
     if (!socket) {
         socket = new WebSocket(WS_URL);
