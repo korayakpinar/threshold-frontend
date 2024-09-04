@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
@@ -94,24 +94,29 @@ const TransactionBox = ({ transaction, isLoading }) => {
 export default function Home() {
   const wsUrl = "wss://banger.build:8082/ws";
   const { transactions, connectionStatus } = useRecentTransactions(wsUrl);
-  const isLoading = connectionStatus !== 'connected';
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (connectionStatus === 'connected') {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 100); // Reduce waiting time to 1 second
+      return () => clearTimeout(timer);
+    }
+  }, [connectionStatus]);
 
   return (
     <main className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Recent Transactions</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {isLoading ? (
+        {(isLoading || transactions.length === 0) ? (
           [...Array(4)].map((_, index) => (
             <TransactionBox key={index} isLoading={true} />
           ))
-        ) : transactions.length > 0 ? (
+        ) : (
           transactions.slice(0, 8).map((transaction, index) => (
             <TransactionBox key={index} transaction={transaction} isLoading={false} />
           ))
-        ) : (
-          <div className="col-span-full text-center text-gray-500 text-lg">
-            No transactions found.
-          </div>
         )}
       </div>
     </main>
