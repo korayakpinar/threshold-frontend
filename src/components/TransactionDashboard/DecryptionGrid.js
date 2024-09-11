@@ -63,8 +63,8 @@ const DecryptionGrid = ({ committeeSize, partialDecryptions }) => {
         <h2 className="text-xl font-bold mb-4">Partial Decryption Info</h2>
         {selectedIndex !== null && (
           <>
-            <p className="mb-2"><strong>Signer Index:</strong> {selectedIndex}</p>
-            {selectedIndex >= committeeSize - 2 ? (
+            <p className="mb-2"><strong>Signer Index:</strong> {selectedIndex + 1}</p>
+            {selectedIndex > committeeSize - 2 ? (
               <p>No signer data available. The committee size is {committeeSize}, and this index exceeds the maximum valid index.</p>
             ) : selectedDecryption ? (
               <div className="p-4 rounded overflow-hidden" style={{ backgroundColor: '#EAEAEA' }}>

@@ -10,6 +10,15 @@ const truncateHash = (hash, startLength = 8, endLength = 8) => {
   return `${hash.slice(0, startLength)}...${hash.slice(-endLength)}`;
 };
 
+const decodeBase64 = (str) => {
+  try {
+    return atob(str);
+  } catch (e) {
+    console.error('Error decoding base64:', e);
+    return 'Error decoding data';
+  }
+};
+
 const calculateDecryptionLatency = (proposedAt, decryptedAt) => {
   if (!proposedAt || !decryptedAt) return 'N/A';
   
@@ -67,9 +76,17 @@ const TransactionInfo = ({ data, isLoading }) => {
                   { label: 'To:', value: isLoading ? <Skeleton width={150} /> : truncateHash(data.rawTx.To) },
                   { label: 'Value:', value: isLoading ? <Skeleton width={100} /> : weiToEther(data.rawTx.Value) },
                   { label: 'Nonce:', value: isLoading ? <Skeleton width={50} /> : data.rawTx.Nonce },
+                  { 
+                    label: 'Data:', 
+                    value: isLoading ? <Skeleton width={150} /> : (
+                      <div className="break-all">
+                        {decodeBase64(data.rawTx.Data)}
+                      </div>
+                    )
+                  },
                 ] : [])
               ].map(({ label, value }, index) => (
-                <div key={index}>
+                <div key={index} className={label === 'Data:' ? 'col-span-2' : ''}>
                   <p className="font-semibold">{label}</p>
                   <p className="text-sm">{value}</p>
                 </div>

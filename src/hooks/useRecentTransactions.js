@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const RECONNECT_INTERVAL = 5000;
@@ -35,14 +33,8 @@ export function useRecentTransactions(ws_url) {
                 const data = JSON.parse(event.data);
                 if (data.type === 'recentTransactions') {
                     setTransactions(data.transactions || []);
-                } else if (data.type === 'newTransaction') {
-                    setTransactions(prevTransactions => {
-                        if (Array.isArray(prevTransactions)) {
-                            return [data.transaction, ...prevTransactions];
-                        } else {
-                            return [data.transaction];
-                        }
-                    });
+                } else if (data.type === 'recentTransactionsUpdate') {
+                    setTransactions(data.transactions || []);
                 }
             } catch (e) {
                 console.error("Error parsing WebSocket message:", e);

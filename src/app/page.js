@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Lock } from 'lucide-react';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { useRecentTransactions } from '../hooks/useRecentTransactions';
@@ -39,8 +39,14 @@ const TransactionBox = ({ transaction, isLoading }) => {
   return (
     <div 
       onClick={handleClick}
-      className={`bg-white p-4 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105 border-t-2 border-blue-500 ${!isLoading && 'cursor-pointer'} h-[200px] flex flex-col justify-between`}
+      className={`bg-white p-4 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105 border-t-2 border-blue-500 ${!isLoading && 'cursor-pointer'} h-[200px] flex flex-col justify-between relative`}
     >
+      {!isLoading && transaction.alreadyEncrypted && (
+        <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center">
+          <Lock size={12} className="mr-1" />
+          Client-side Encrypted
+        </div>
+      )}
       <div>
         <div className="text-lg font-bold mb-2 text-blue-600">
           {isLoading ? <Skeleton width="80%" height={24} /> : truncateHash(transaction.hash)}
@@ -100,7 +106,7 @@ export default function Home() {
     if (connectionStatus === 'connected') {
       const timer = setTimeout(() => {
         setIsLoading(false);
-      }, 100); // Reduce waiting time to 1 second
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [connectionStatus]);
@@ -110,12 +116,12 @@ export default function Home() {
       <h1 className="text-3xl font-bold text-center mb-8">Recent Transactions</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {(isLoading || transactions.length === 0) ? (
-          [...Array(4)].map((_, index) => (
+          [...Array(8)].map((_, index) => (
             <TransactionBox key={index} isLoading={true} />
           ))
         ) : (
-          transactions.slice(0, 8).map((transaction, index) => (
-            <TransactionBox key={index} transaction={transaction} isLoading={false} />
+          transactions.slice(0, 8).map((transaction) => (
+            <TransactionBox key={transaction.hash} transaction={transaction} isLoading={false} />
           ))
         )}
       </div>
