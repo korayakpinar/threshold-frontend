@@ -4,7 +4,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Banger TSS",
+  title: "Project Eldergleam",
   description: "You want to protect your transaction? Jump in!",
 };
 

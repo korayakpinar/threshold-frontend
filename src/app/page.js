@@ -98,7 +98,7 @@ const TransactionBox = ({ transaction, isLoading }) => {
 };
 
 export default function Home() {
-  const wsUrl = "wss://banger.build:8082/ws";
+  const wsUrl = "wss://legendrelabs.xyz:8082/ws";
   const { transactions, connectionStatus } = useRecentTransactions(wsUrl);
   const [isLoading, setIsLoading] = useState(true);
 
